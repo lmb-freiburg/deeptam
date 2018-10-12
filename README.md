@@ -18,6 +18,8 @@ See the [project page](https://lmb.informatik.uni-freiburg.de/people/zhouh/deept
 
 
 ## Setup
+Current version is tested on Ubuntu 16.04 and with Python3.
+
 ```bash
 # install virtualenv manager (here we use pew)
 pip3 install pew
