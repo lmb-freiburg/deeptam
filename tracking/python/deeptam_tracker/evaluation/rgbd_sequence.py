@@ -16,8 +16,9 @@ class RGBDSequence:
     _all_intrinsics = {
         'ros_default': [545.0, 525.0, 319.5, 239.5],
         'freiburg1': [517.3, 516.5, 318.6, 255.3],
-        'freiburg2': [520.9, 521.0,	325.1, 249.7],
-        'freiburg3': [535.4, 539.2,	320.1, 247.6],
+        'freiburg2': [520.9, 521.0, 325.1, 249.7],
+        'freiburg3': [535.4, 539.2, 320.1, 247.6],
+        'eth'      : [517.3, 516.5, 318.6, 255.3]
     }
 
     def __init__(self, sequence_dir, require_depth=False, require_pose=False):
@@ -29,8 +30,6 @@ class RGBDSequence:
             If True use all rgb images even if there is no depth or ground truth pose
         """
         self.sequence_dir = sequence_dir
-
-
         self.intrinsics = None
 
 
@@ -49,7 +48,7 @@ class RGBDSequence:
             else:
                 self.groundtruth_dict = None
 
-        elif 'freiburg' in sequence_dir: 
+        elif 'eth' in sequence_dir:
 
             self.rgb_dict = read_file_list(rgb_txt)
             self.depth_dict = read_file_list(depth_txt)
@@ -74,11 +73,15 @@ class RGBDSequence:
 
 
 
-        self.matches_depth = associate(self.rgb_dict, self.depth_dict)    
+        self.matches_depth = associate(self.rgb_dict, self.depth_dict)
         self.matches_depth_dict = dict(self.matches_depth)
+        print (self.groundtruth_dict)
         if not self.groundtruth_dict is None:
-            self.matches_pose = associate(self.rgb_dict, self.groundtruth_dict)    
+            self.matches_pose = associate(self.rgb_dict, self.groundtruth_dict)
             self.matches_pose_dict = dict(self.matches_pose)
+        else:
+            self.matches_pose = None
+            self.matches_pose_dict = None
 
         self.matches_depth_pose = []
         for trgb in sorted(self.rgb_dict.keys()):
@@ -94,8 +97,11 @@ class RGBDSequence:
                 tdepth = None
             if require_depth and tdepth is None:
                 continue
-            if trgb in self.matches_pose_dict:
-                tpose = self.matches_pose_dict[trgb]
+            if not self.matches_pose_dict is None:
+                if trgb in self.matches_pose_dict:
+                    tpose = self.matches_pose_dict[trgb]
+                else:
+                    tpose = None
             else:
                 tpose = None
             if require_pose and tpose is None:
@@ -103,8 +109,8 @@ class RGBDSequence:
             self.matches_depth_pose.append((trgb,tdepth,tpose))
 
         # make sure the initial frame has a depth map and a pose
-        while self.matches_depth_pose[0][1] is None or self.matches_depth_pose[0][2] is None:
-            del self.matches_depth_pose[0]
+        #while self.matches_depth_pose[0][1] is None or self.matches_depth_pose[0][2] is None:
+        del self.matches_depth_pose[0]
 
         self.seq_len = len(self.matches_depth_pose)
 
@@ -116,7 +122,6 @@ class RGBDSequence:
 
         # open first matched image to get the original image size
         self.original_image_size = Image.open(os.path.join(self.sequence_dir, *self.rgb_dict[self.matches_depth_pose[0][0]])).size
-
 
 
     def name(self):
@@ -132,18 +137,18 @@ class RGBDSequence:
     def get_original_normalized_intrinsics(self):
         """Returns the original intrinsics in normalized form"""
         return np.array([
-                self._K[0,0]/self.original_image_size[0], 
-                self._K[1,1]/self.original_image_size[1], 
-                self._K[0,2]/self.original_image_size[0], 
+                self._K[0,0]/self.original_image_size[0],
+                self._K[1,1]/self.original_image_size[1],
+                self._K[0,2]/self.original_image_size[0],
                 self._K[1,2]/self.original_image_size[1]
                 ], dtype=np.float32)
 
     def get_view(self, frame, normalized_intrinsics=None, width=None, height=None, depth=True):
         """Returns a view object for the given rgb frame
-        
+
         frame: int
             The rgb frame number
-        
+
         normalized_intrinsics: np.array or list
             Normalized intrinsics. Default is sun3d
 
@@ -162,7 +167,7 @@ class RGBDSequence:
         inverse_depth: bool
             If true the returned depth is the inverse depth
         """
-        
+
         if width is None:
             width = 128
 
@@ -187,13 +192,13 @@ class RGBDSequence:
         if depth and tdepth:
             depth_path = os.path.join(self.sequence_dir, *self.depth_dict[tdepth])
             #print(depth_path)
-            
+
             dpth = self.read_depth_image(depth_path)
             dpth_metric = 'camera_z'
         else:
             dpth = None
             dpth_metric = None
-        
+
         if tpose:
             timestamp_pose = [tpose] + self.groundtruth_dict[tpose]
             T = transform44(timestamp_pose)
@@ -224,7 +229,7 @@ class RGBDSequence:
 
         frame: int
             The rgb frame number
-        
+
         normalized_intrinsics: np.array or list
             Normalized intrinsics. Default is sun3d
 
@@ -245,7 +250,7 @@ class RGBDSequence:
 
         frame: int
             The rgb frame number
-        
+
         normalized_intrinsics: np.array or list
             Normalized intrinsics. Default is sun3d
 
@@ -260,14 +265,14 @@ class RGBDSequence:
         if inverse and not depth is None:
             depth = 1/depth
         return depth
-        
-        
+
+
     def get_image_depth(self, frame, normalized_intrinsics=None, width=None, height=None, inverse=False):
         """Returns the depth for the specified frame
 
         frame: int
             The rgb frame number
-        
+
         normalized_intrinsics: np.array or list
             Normalized intrinsics. Default is sun3d
 
@@ -283,13 +288,13 @@ class RGBDSequence:
         if inverse and not depth is None:
             depth = 1/depth
         return (view.image, depth)
-        
-        
+
+
 
     def get_dict(self, frame, normalized_intrinsics=None, width=None, height=None):
         """Returns image, depth and pose as a dict of numpy arrays
         The depth is the inverse depth.
-        
+
         frame: int
             The rgb frame number
 
@@ -300,13 +305,13 @@ class RGBDSequence:
             image height. default is 96
         """
         view = self.get_view(frame, normalized_intrinsics=normalized_intrinsics, width=width, height=height, depth=True)
-        
+
         img_arr = np.array(view.image).transpose([2,0,1]).astype(np.float32)/255 -0.5
         rotation = Quaternion(view.R).toAngleAxis()
         rotation = rotation[0]*np.array(rotation[1])
 
-        result = { 
-            'image': img_arr[np.newaxis,:,:,:], 
+        result = {
+            'image': img_arr[np.newaxis,:,:,:],
             'depth': None,
             'rotation': rotation[np.newaxis,:],
             'translation': view.t[np.newaxis,:],
@@ -325,7 +330,7 @@ class RGBDSequence:
         trgb, tdepth, tpose = self.matches_depth_pose[frame1]
         timestamp_pose = [tpose] + self.groundtruth_dict[tpose]
         inv_T1 = transform44(timestamp_pose)
-        
+
         trgb, tdepth, tpose = self.matches_depth_pose[frame2]
         timestamp_pose = [tpose] + self.groundtruth_dict[tpose]
         T2 = transform44(timestamp_pose)
@@ -337,7 +342,7 @@ class RGBDSequence:
         rotation = Quaternion(R12).toAngleAxis()
         rotation = rotation[0]*np.array(rotation[1])
 
-        return { 
+        return {
                 'rotation': rotation[np.newaxis,:],
                 'translation': t12[np.newaxis,:],
                 }
@@ -359,7 +364,7 @@ class RGBDSequence:
             Path to the image
         """
         scalingFactor = 5000.0
-        depth = Image.open(path)
+        depth = Image.open(path).convert('I')
         depth.load()
         if depth.mode != "I":
             raise Exception("Depth image is not in intensity format {0}".format(path))
@@ -367,12 +372,12 @@ class RGBDSequence:
         #depth_arr[depth_arr == 0] = np.nan
         del depth
         return depth_arr.astype(np.float32)
-    
+
     @staticmethod
     def write_rgbd_pose_format(path, poses, timestamps):
         """writes a pose txt file compatible with the rgbd eval tools
-    
-        path: str 
+
+        path: str
             Path to the output file
 
         poses: list of Pose
@@ -380,7 +385,7 @@ class RGBDSequence:
         """
         assert len(poses) == len(timestamps)
         with open(path,'w') as f:
-            
+
             for i in range(len(poses)):
                 pose = poses[i]
                 timestamp = timestamps[i]
@@ -391,6 +396,6 @@ class RGBDSequence:
                 T = np.linalg.inv(T) # convert to cam to world
                 R = T[:3,:3]
                 t = T[:3,3]
-                
+
                 q = Quaternion(R)
                 f.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(timestamp, *t, *q))
