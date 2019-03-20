@@ -133,17 +133,17 @@ def track_rgbd_sequence(checkpoint, datadir, tracking_module_path, visualization
         gt_poses.append(frame['pose'])
         pr_poses = tracker.poses
 
-        print ("\n")
-        print ("Predicted Poses: \n")
-        print (pr_poses[-1])
-        print ("\n")
-        print ("Ground Truth Poses: \n")
-        print (gt_poses[-1])
+        # print ("\n")
+        # print ("Predicted Poses: \n")
+        # print (pr_poses[-1])
+        # print ("\n")
+        # print ("Ground Truth Poses: \n")
+        # print (gt_poses[-1])
         # if not result['warped_image'] is None:
         #     print (result['warped_image'])
         #     img = Image.fromarray(result['warped_image'][0], 'RGB')
         #     img.show()
-        input ("Press Enter")
+        # input ("Press Enter")
 
         if visualization:
             update_visualization(axes, pr_poses, gt_poses, frame['image'], result['warped_image'])
