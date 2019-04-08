@@ -47,6 +47,7 @@ class Tracker:
         self._key_angle_deg_threshold = key_angle_deg_threshold
         self._key_distance_threshold = key_distance_threshold
         self._init_pose = init_pose
+        
 
         self.clear()
     
@@ -312,4 +313,21 @@ class TrackerCore:
             'warped_image': output['warped_image']
         }
     
+    def compute_current_pose_iter(self, image, iter_num=3, pose_guess=None):
+        """Computes the current pose with more iterations
+        
+        image: np.array
+        
+        iter_num: int
+        """
+        for iteration in range(iter_num):
+            prediction = self.compute_current_pose(image, pose_guess=pose_guess)
+            pose_guess = prediction['pose']
+            
+        return prediction
+            
+
+
+        
+        
     
