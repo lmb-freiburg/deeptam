@@ -14,7 +14,7 @@ If you use this code for research, please cite the following paper:
     
 See the [project page](https://lmb.informatik.uni-freiburg.de/people/zhouh/deeptam/) for the paper and other material.
 
-**Note**: Currently we only provide deployment code for the camera tracking. The mapping code will come soon.
+**Note**: Currently we only provide deployment code.
 
 
 ## Setup
@@ -61,6 +61,9 @@ DEEPTAM_DIR=$PWD/deeptam
 
 # add deeptam_tracker to your PYTHON_PATH
 pew add $DEEPTAM_DIR/tracking/python
+
+# add deeptam_mapper to your PYTHON_PATH
+pew add $DEEPTAM_DIR/mapping/python
 ```
 
 ## Running tracking examples
@@ -87,6 +90,16 @@ python3 example_advanced_sequence.py
 
 # or run without visualization for speedup
 python3 example_advanced_sequence.py --disable_vis
+```
+## Running mapping examples
+```bash
+# download weights
+cd $DEEPTAM_DIR/mapping/weights
+./download_weights.sh
+
+# run the example
+cd $DEEPTAM_DIR/mapping/examples
+python3 mapping_test_deeptam.py
 ```
 
 ## License
