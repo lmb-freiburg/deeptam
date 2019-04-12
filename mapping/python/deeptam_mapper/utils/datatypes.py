@@ -15,6 +15,15 @@ from minieigen import Matrix3, Vector3
 from .rotation_conversion import *
 import numpy as np
 
+class Frame:
+    def __init__(self,
+                image,
+                pose=None,
+                depth=None):
+        self.image = image
+        self.pose = pose
+        self.depth =depth
+
 def Pose_identity():
     """Returns the identity pose"""
     return Pose(R = Matrix3.Identity, t = Vector3.Zero)
