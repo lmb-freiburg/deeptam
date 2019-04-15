@@ -116,7 +116,7 @@ def adjust_intrinsics(view, K_new, width_new, height_new):
         max_depth    = np.max(view.depth)
         depth_resize = view.depth / max_depth
         depth_resize[depth_resize < 0.] = 0.
-        depth_resize = resize(depth_resize, (height_resize,width_resize), 0,mode='constant') * max_depth
+        depth_resize = resize(depth_resize, (height_resize,width_resize), 0, mode='constant', anti_aliasing=None) * max_depth
     else:
         depth_resize = None
     
